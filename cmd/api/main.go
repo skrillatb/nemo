@@ -60,7 +60,8 @@ func main() {
 
 	r.Route("/api", func(r chi.Router) {
 		r.Route("/v1", func(r chi.Router) {
-			r.With(mw.RequireAuth(apiToken)).Get("/sites", app.ListSites)
+			r.Get("/sites", app.ListSites)
+			r.With(mw.RequireAuth(apiToken)).Post("/sites", app.CreateSite)
 		})
 	})
 
