@@ -1,0 +1,6 @@
+# Caddyfile (dev local)
+
+# - Remplacer "localhost" par le vrai domaine
+:3000 {
+    reverse_proxy api:8080
+}
