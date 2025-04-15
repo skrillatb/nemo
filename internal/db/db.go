@@ -39,7 +39,7 @@ func Init(db *sql.DB) error {
 			site_url TEXT,
 			image_url TEXT,
 			language TEXT,
-			ads BOOLEAN DEFAULT true,
+			ads BOOLEAN DEFAULT 1,
 			type TEXT DEFAULT 'null',
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
