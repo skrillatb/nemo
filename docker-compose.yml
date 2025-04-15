@@ -4,27 +4,36 @@ services:
       context: .
       dockerfile: Dockerfile
     expose:
-      - "8080"  
+      - "8080"
     env_file:
       - .env
     command: ./api
     restart: unless-stopped
+    networks:
+      - internal
 
   migrate:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: nemo-migrate
     env_file:
       - .env
     entrypoint: ./migrate
+    networks:
+      - internal
 
   caddy:
     image: caddy:2
-    container_name: nemo-caddy
     ports:
-      - "3000:3000"  
+      - "3000:3000" 
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
+    networks:
+      - internal
     depends_on:
       - api
+    restart: unless-stopped
+
+networks:
+  internal:
+    driver: bridge
