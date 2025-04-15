@@ -60,8 +60,12 @@ func main() {
 
 	r.Route("/api", func(r chi.Router) {
 		r.Route("/v1", func(r chi.Router) {
-			r.Get("/sites", app.ListSites)
-			r.With(mw.RequireAuth(apiToken)).Post("/sites", app.CreateSite)
+			r.Route("/sites", func(r chi.Router) {
+				r.Get("/", app.ListSites)
+				r.With(mw.RequireAuth(apiToken)).Post("/", app.CreateSite)
+				r.With(mw.RequireAuth(apiToken)).Put("/{id}", app.UpdateSite)
+				r.With(mw.RequireAuth(apiToken)).Delete("/{id}", app.DeleteSite)
+			})
 		})
 	})
 
