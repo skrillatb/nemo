@@ -1,0 +1,30 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - "8080"  
+    env_file:
+      - .env
+    command: ./api
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nemo-migrate
+    env_file:
+      - .env
+    entrypoint: ./migrate
+
+  caddy:
+    image: caddy:2
+    container_name: nemo-caddy
+    ports:
+      - "3000:3000"  
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    depends_on:
+      - api
