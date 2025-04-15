@@ -27,11 +27,21 @@ func main() {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("welcome"))
-	})
+    r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusOK)
+        w.Write([]byte(`{
+            "status": "🧣 Everything is fine — API is up!",
+            "mood": "Taylor Swift - All Too Well (10 Minute Version)",
+            "link": "https://open.spotify.com/track/5enxwA8aAbwZbf5qCHORXi"
+        }`))
+    })
 
-	r.Get("/sites", app.ListRecentSites)
+	r.Route("/api", func(r chi.Router) {
+		r.Route("/v1", func(r chi.Router) {
+			r.Get("/sites", app.ListSites)
+		})
+	})
 
 	http.ListenAndServe(":3000", r)
 }
