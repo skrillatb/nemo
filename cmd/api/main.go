@@ -16,9 +16,9 @@ import (
 )
 
 func main() {
-    _ = godotenv.Load() 
+	_ = godotenv.Load()
 
-    apiToken := os.Getenv("API_TOKEN")
+	apiToken := os.Getenv("API_TOKEN")
 	if apiToken == "" {
 		fmt.Println("API_TOKEN manquant dans .env")
 		return
@@ -33,34 +33,34 @@ func main() {
 
 	app := &handlers.App{DB: database}
 
-    r := chi.NewRouter()
+	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
 
-    r.Use(cors.Handler(cors.Options{
-        AllowedOrigins:   []string{"http://localhost:5173", os.Getenv("PRODUCTION_URL")},
-        AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-        AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
-        ExposedHeaders:   []string{"Link"},
-        AllowCredentials: false,
-        MaxAge:           300,
-    }))
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173", os.Getenv("PRODUCTION_URL")},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
 
-    r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-        w.Header().Set("Content-Type", "application/json")
-        w.WriteHeader(http.StatusOK)
-        w.Write([]byte(`{
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{
             "status": "🧣 Everything is fine — API is up!",
             "mood": "Taylor Swift - All Too Well (10 Minute Version)",
             "link": "https://open.spotify.com/track/5enxwA8aAbwZbf5qCHORXi"
         }`))
-    })
+	})
 
 	r.Route("/api", func(r chi.Router) {
 		r.Route("/v1", func(r chi.Router) {
-            r.With(mw.RequireAuth(apiToken)).Get("/sites", app.ListSites)
+			r.With(mw.RequireAuth(apiToken)).Get("/sites", app.ListSites)
 		})
 	})
 
