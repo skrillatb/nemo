@@ -12,22 +12,15 @@ import (
 )
 
 func (app *App) CreateSite(w http.ResponseWriter, r *http.Request) {
-
-	err := r.ParseMultipartForm(10 << 20)
+	site, fileHeader, err := BindAndUploadSite(r, true)
 	if err != nil {
-		http.Error(w, "Fichier trop gros ou mauvais format", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	site := Site{}
-	if err := json.Unmarshal([]byte(r.FormValue("data")), &site); err != nil {
-		http.Error(w, "Erreur JSON site : "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	file, fileHeader, err := r.FormFile("image")
+	file, err := fileHeader.Open()
 	if err != nil {
-		http.Error(w, "Fichier manquant", http.StatusBadRequest)
+		http.Error(w, "Impossible d'ouvrir le fichier", http.StatusInternalServerError)
 		return
 	}
 	defer file.Close()
@@ -47,8 +40,8 @@ func (app *App) CreateSite(w http.ResponseWriter, r *http.Request) {
 	site.UpdatedAt = time.Now()
 
 	_, err = app.DB.Exec(`
-	INSERT INTO sites (name, site_url, image_url, language, ads, type, created_at, updated_at)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		INSERT INTO sites (name, site_url, image_url, language, ads, type, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		site.Name, site.SiteURL, site.ImageURL, site.Language, site.Ads, site.Type, site.CreatedAt, site.UpdatedAt)
 
 	if err != nil {
