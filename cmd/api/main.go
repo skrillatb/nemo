@@ -91,6 +91,6 @@ func main() {
 		})
 	})
 
-	logger.Info("Serveur démarré", zap.String("port", ":3000"))
-	http.ListenAndServe(":3000", r)
+	logger.Info("Serveur démarré", zap.String("port", ":8080"))
+	http.ListenAndServe(":8080", r)
 }
