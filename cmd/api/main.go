@@ -51,16 +51,21 @@ func main() {
 	// Headers de sécurité
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Supprime l'empreinte du serveur
+			w.Header().Del("Server")
+
+			// Headers de sécurité
 			w.Header().Set("X-Content-Type-Options", "nosniff")
 			w.Header().Set("X-Frame-Options", "DENY")
 			w.Header().Set("X-XSS-Protection", "1; mode=block")
+			w.Header().Set("Referrer-Policy", "no-referrer") 
 			next.ServeHTTP(w, r)
 		})
 	})
 
 	// CORS
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"*", os.Getenv("PRODUCTION_URL")},
+		AllowedOrigins:   []string{"http://localhost:5173", os.Getenv("PRODUCTION_URL")},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		ExposedHeaders:   []string{"Link"},
@@ -92,5 +97,7 @@ func main() {
 	})
 
 	logger.Info("Serveur démarré", zap.String("port", ":8080"))
-	http.ListenAndServe(":8080", r)
+	if err := http.ListenAndServe(":8080", r); err != nil {
+		logger.Fatal("Erreur au démarrage du serveur", zap.Error(err))
+	}
 }
