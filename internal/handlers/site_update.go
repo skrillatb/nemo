@@ -21,24 +21,24 @@ func (app *App) UpdateSite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = r.ParseMultipartForm(10 << 20)
+	site, fileHeader, err := BindAndUploadSite(r, false)
 	if err != nil {
-		http.Error(w, "Fichier trop gros ou mauvais format", http.StatusBadRequest)
-		return
-	}
-
-	site := Site{}
-	if err := json.Unmarshal([]byte(r.FormValue("data")), &site); err != nil {
-		http.Error(w, "Erreur JSON : "+err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	var imageURL string
 
-	file, fileHeader, err := r.FormFile("image")
-	if err == nil && fileHeader != nil {
+	if fileHeader != nil {
+		file, err := fileHeader.Open()
+		if err != nil {
+			http.Error(w, "Impossible d'ouvrir l'image", http.StatusInternalServerError)
+			return
+		}
 		defer file.Close()
+
 		filename := strings.ReplaceAll(site.Name, " ", "_") + filepath.Ext(fileHeader.Filename)
+
 		err = storage.UploadToBunny(file, filename)
 		if err != nil {
 			http.Error(w, "Échec upload image : "+err.Error(), http.StatusInternalServerError)
@@ -58,8 +58,8 @@ func (app *App) UpdateSite(w http.ResponseWriter, r *http.Request) {
 	_, err = app.DB.Exec(`
 		UPDATE sites
 		SET name = ?, site_url = ?, image_url = ?, language = ?, ads = ?, type = ?, updated_at = ?
-		WHERE id = ?
-	`, site.Name, site.SiteURL, imageURL, site.Language, site.Ads, site.Type, time.Now(), siteID)
+		WHERE id = ?`,
+		site.Name, site.SiteURL, imageURL, site.Language, site.Ads, site.Type, time.Now(), siteID)
 
 	if err != nil {
 		http.Error(w, "Erreur mise à jour site : "+err.Error(), http.StatusInternalServerError)
@@ -67,5 +67,7 @@ func (app *App) UpdateSite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"site mis à jour"}`))
+	json.NewEncoder(w).Encode(map[string]string{
+		"status": "site mis à jour",
+	})
 }
