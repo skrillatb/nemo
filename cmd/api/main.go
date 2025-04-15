@@ -5,20 +5,23 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/skrillatb/nemo/internal/db"
-	"github.com/skrillatb/nemo/internal/handlers"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
+
+	"github.com/skrillatb/nemo/internal/db"
+	"github.com/skrillatb/nemo/internal/handlers"
+	mw "github.com/skrillatb/nemo/internal/middleware"
 )
 
 func main() {
-    err := godotenv.Load() 
+    _ = godotenv.Load() 
 
-	if err != nil {
-		fmt.Println("Erreur de chargement du .env :", err)
+    apiToken := os.Getenv("API_TOKEN")
+	if apiToken == "" {
+		fmt.Println("API_TOKEN manquant dans .env")
+		return
 	}
 
 	database, err := db.Connect()
@@ -57,7 +60,7 @@ func main() {
 
 	r.Route("/api", func(r chi.Router) {
 		r.Route("/v1", func(r chi.Router) {
-			r.Get("/sites", app.ListSites)
+            r.With(mw.RequireAuth(apiToken)).Get("/sites", app.ListSites)
 		})
 	})
 
