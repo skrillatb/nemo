@@ -10,7 +10,7 @@ import (
 )
 
 func Connect() (*sql.DB, error) {
-	err := godotenv.Load() 
+	err := godotenv.Load()
 	if err != nil {
 		return nil, fmt.Errorf("erreur de chargement du .env : %w", err)
 	}
@@ -41,6 +41,7 @@ func Init(db *sql.DB) error {
 			language TEXT,
 			ads BOOLEAN DEFAULT 1,
 			type TEXT DEFAULT 'null',
+			recommended BOOLEAN DEFAULT 0,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)
