@@ -1,3 +1,7 @@
+package models
+
+import "time"
+
 type Site struct {
 	Name      string    `json:"name" validate:"required"`
 	SiteURL   string    `json:"site_url" validate:"required,url"`
