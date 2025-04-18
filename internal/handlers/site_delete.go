@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"path"
 	"strconv"
@@ -13,14 +14,18 @@ func (app *App) DeleteSite(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "id")
 	siteID, err := strconv.Atoi(idParam)
 	if err != nil {
-		http.Error(w, "ID invalide", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "ID invalide"})
 		return
 	}
 
 	var imageURL string
 	err = app.DB.QueryRow(`SELECT image_url FROM sites WHERE id = ?`, siteID).Scan(&imageURL)
 	if err != nil {
-		http.Error(w, "Site introuvable ou erreur DB", http.StatusNotFound)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Site introuvable ou erreur DB"})
 		return
 	}
 
@@ -28,20 +33,26 @@ func (app *App) DeleteSite(w http.ResponseWriter, r *http.Request) {
 		filename := path.Base(imageURL)
 		err := storage.DeleteFromBunny(filename)
 		if err != nil {
-			http.Error(w, "Erreur suppression image Bunny", http.StatusInternalServerError)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Erreur suppression image Bunny"})
 			return
 		}
 	}
 
 	result, err := app.DB.Exec("DELETE FROM sites WHERE id = ?", siteID)
 	if err != nil {
-		http.Error(w, "Erreur suppression BDD", http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Erreur suppression BDD"})
 		return
 	}
 
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
-		http.Error(w, "Site non trouvé", http.StatusNotFound)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Site non trouvé"})
 		return
 	}
 
