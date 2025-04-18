@@ -21,6 +21,7 @@ type Site struct {
 	Type      string    `json:"type"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	Hidden    bool      `json:"hidden"`
 }
 
 func (app *App) ListSites(w http.ResponseWriter, r *http.Request) {
@@ -28,9 +29,10 @@ func (app *App) ListSites(w http.ResponseWriter, r *http.Request) {
 		"language": "language = ?",
 		"type":     "type = ?",
 		"ads":      "ads = ?",
+		"hidden":   "hidden = ?",
 	}
 
-	query := `SELECT id, name, site_url, image_url, language, ads, type, created_at, updated_at FROM sites WHERE 1=1`
+	query := `SELECT id, name, site_url, image_url, language, ads, type, created_at, updated_at, hidden FROM sites WHERE 1=1`
 	var args []interface{}
 
 	for key, condition := range allowedFilters {
@@ -66,7 +68,7 @@ func (app *App) ListSites(w http.ResponseWriter, r *http.Request) {
 	var sites []Site
 	for rows.Next() {
 		var s Site
-		err := rows.Scan(&s.ID, &s.Name, &s.SiteURL, &s.ImageURL, &s.Language, &s.Ads, &s.Type, &s.CreatedAt, &s.UpdatedAt)
+		err := rows.Scan(&s.ID, &s.Name, &s.SiteURL, &s.ImageURL, &s.Language, &s.Ads, &s.Type, &s.CreatedAt, &s.UpdatedAt, &s.Hidden)
 		if err != nil {
 			http.Error(w, "Erreur lecture", http.StatusInternalServerError)
 			return
@@ -83,5 +85,3 @@ func (app *App) ListSites(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(sites)
 }
-
-

@@ -17,13 +17,17 @@ func (app *App) UpdateSite(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "id")
 	siteID, err := strconv.Atoi(idParam)
 	if err != nil {
-		http.Error(w, "ID invalide", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "ID invalide"})
 		return
 	}
 
 	site, fileHeader, err := BindAndUploadSite(r, false)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 
@@ -32,7 +36,9 @@ func (app *App) UpdateSite(w http.ResponseWriter, r *http.Request) {
 	if fileHeader != nil {
 		file, err := fileHeader.Open()
 		if err != nil {
-			http.Error(w, "Impossible d'ouvrir l'image", http.StatusInternalServerError)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Impossible d'ouvrir l'image"})
 			return
 		}
 		defer file.Close()
@@ -41,7 +47,9 @@ func (app *App) UpdateSite(w http.ResponseWriter, r *http.Request) {
 
 		err = storage.UploadToBunny(file, filename)
 		if err != nil {
-			http.Error(w, "Échec upload image : "+err.Error(), http.StatusInternalServerError)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Échec upload image : " + err.Error()})
 			return
 		}
 
@@ -50,7 +58,9 @@ func (app *App) UpdateSite(w http.ResponseWriter, r *http.Request) {
 	} else {
 		err = app.DB.QueryRow(`SELECT image_url FROM sites WHERE id = ?`, siteID).Scan(&imageURL)
 		if err != nil {
-			http.Error(w, "Erreur récupération image existante", http.StatusInternalServerError)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Erreur récupération image existante"})
 			return
 		}
 	}
@@ -62,12 +72,14 @@ func (app *App) UpdateSite(w http.ResponseWriter, r *http.Request) {
 		site.Name, site.SiteURL, imageURL, site.Language, site.Ads, site.Type, time.Now(), siteID)
 
 	if err != nil {
-		http.Error(w, "Erreur mise à jour site : "+err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Erreur mise à jour site : " + err.Error()})
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{
-		"status": "site mis à jour",
+		"success": "true",
 	})
 }
