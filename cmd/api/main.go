@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"os"
 	"time"
@@ -18,6 +19,8 @@ import (
 	"github.com/skrillatb/nemo/internal/handlers"
 	"github.com/skrillatb/nemo/internal/middlewares"
 )
+
+var startTime = time.Now()
 
 func main() {
 	_ = godotenv.Load()
@@ -98,19 +101,29 @@ func main() {
 	// Routes
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("Health check", zap.String("remote", r.RemoteAddr))
+
+		uptime := time.Since(startTime).Round(time.Second)
+		start := startTime.Format(time.RFC3339)
+
+		resp := map[string]interface{}{
+			"status":  "🧣 Everything is fine — API is up!",
+			"mood":    "Taylor Swift - All Too Well (10 Minute Version)",
+			"link":    "https://open.spotify.com/track/5enxwA8aAbwZbf5qCHORXi",
+			"uptime":  uptime.String(),
+			"started": start,
+			"version": "1.0.0",
+		}
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{
-			"status": "🧣 Everything is fine — API is up!",
-			"mood": "Taylor Swift - All Too Well (10 Minute Version)",
-			"link": "https://open.spotify.com/track/5enxwA8aAbwZbf5qCHORXi"
-		}`))
+		json.NewEncoder(w).Encode(resp)
 	})
 
 	r.Route("/api", func(r chi.Router) {
 		r.Route("/v1", func(r chi.Router) {
 			r.Route("/sites", func(r chi.Router) {
 				r.Get("/", app.ListSites)
+				r.Get("/{id}", app.GetSite)
 				r.With(middlewares.RequireAuth(os.Getenv("API_TOKEN"))).Post("/", app.CreateSite)
 				r.With(middlewares.RequireAuth(os.Getenv("API_TOKEN"))).Put("/{id}", app.UpdateSite)
 				r.With(middlewares.RequireAuth(os.Getenv("API_TOKEN"))).Delete("/{id}", app.DeleteSite)
@@ -118,9 +131,7 @@ func main() {
 			r.Get("/search", app.Search)
 		})
 	})
-	r.Get("/panic", func(w http.ResponseWriter, r *http.Request) {
-		panic("🔥 Panic volontaire pour test Sentry")
-	})
+
 	// Serve
 	logger.Info("Serveur démarré", zap.String("port", ":8080"))
 	if err := http.ListenAndServe(":8080", r); err != nil {
