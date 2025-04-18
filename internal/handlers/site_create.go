@@ -14,13 +14,17 @@ import (
 func (app *App) CreateSite(w http.ResponseWriter, r *http.Request) {
 	site, fileHeader, err := BindAndUploadSite(r, true)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 
 	file, err := fileHeader.Open()
 	if err != nil {
-		http.Error(w, "Impossible d'ouvrir le fichier", http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Impossible d'ouvrir le fichier"})
 		return
 	}
 	defer file.Close()
@@ -29,7 +33,9 @@ func (app *App) CreateSite(w http.ResponseWriter, r *http.Request) {
 
 	err = storage.UploadToBunny(file, filename)
 	if err != nil {
-		http.Error(w, "Upload Bunny échoué : "+err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Upload Bunny échoué : " + err.Error()})
 		return
 	}
 
@@ -40,15 +46,19 @@ func (app *App) CreateSite(w http.ResponseWriter, r *http.Request) {
 	site.UpdatedAt = time.Now()
 
 	_, err = app.DB.Exec(`
-		INSERT INTO sites (name, site_url, image_url, language, ads, type, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		site.Name, site.SiteURL, site.ImageURL, site.Language, site.Ads, site.Type, site.CreatedAt, site.UpdatedAt)
+		INSERT INTO sites (name, site_url, image_url, language, ads, type, created_at, updated_at, hidden)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		site.Name, site.SiteURL, site.ImageURL, site.Language, site.Ads, site.Type, site.CreatedAt, site.UpdatedAt, site.Hidden)
 
 	if err != nil {
-		http.Error(w, "Erreur DB : "+err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Erreur DB : " + err.Error()})
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(site)
+	json.NewEncoder(w).Encode(map[string]string{
+		"success": "true",
+	})
 }
