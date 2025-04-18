@@ -14,10 +14,10 @@ import (
 func BindAndUploadSite(r *http.Request, requireImage bool) (Site, *multipart.FileHeader, error) {
 	var site Site
 
-	err := r.ParseMultipartForm(10 << 20)
-	if err != nil {
-		return site, nil, fmt.Errorf("fichier trop gros ou mauvais format")
-	}
+	// err := r.ParseMultipartForm(10 << 20)
+	// if err != nil {
+	// 	return site, nil, fmt.Errorf("fichier trop gros ou mauvais format")
+	// }
 
 	if err := json.Unmarshal([]byte(r.FormValue("data")), &site); err != nil {
 		return site, nil, fmt.Errorf("erreur JSON : %v", err)
