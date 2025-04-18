@@ -16,7 +16,9 @@ type SearchResult struct {
 func (app *App) Search(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("query")
 	if query == "" {
-		http.Error(w, "Query manquant", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Query manquant"})
 		return
 	}
 
