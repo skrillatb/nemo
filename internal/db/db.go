@@ -42,6 +42,7 @@ func Init(db *sql.DB) error {
 			ads BOOLEAN DEFAULT 1,
 			type TEXT DEFAULT 'null',
 			recommended BOOLEAN DEFAULT 0,
+			hidden BOOLEAN DEFAULT 0,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)
